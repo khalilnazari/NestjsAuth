@@ -4,10 +4,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
-  private testUser: { email: string; password: string };
+  private testUser: { email: string; password: string; userId: string };
 
   constructor() {
     this.testUser = {
+      userId: '3216546546546',
       email: 'khalil@gmail.com',
       password: '321654',
     };
@@ -21,7 +22,14 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  findOne(email: string) {
+  async findOne(id: string) {
+    return id;
+  }
+
+  findUserByEmail(email: string) {
+    if (email !== this.testUser.email) {
+      return null;
+    }
     return this.testUser;
   }
 
