@@ -4,14 +4,21 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
-  private testUser: { email: string; password: string; userId: string };
+  private testUser: { email: string; password: string; userId: string }[];
 
   constructor() {
-    this.testUser = {
-      userId: '3216546546546',
-      email: 'khalil@gmail.com',
-      password: '321654',
-    };
+    this.testUser = [
+      {
+        userId: '123',
+        email: 'khalil@gmail.com',
+        password: '321654',
+      },
+      {
+        userId: '456',
+        email: 'ahmad@gmail.com',
+        password: '321654',
+      },
+    ];
   }
 
   create(createUserDto: CreateUserDto) {
@@ -27,10 +34,9 @@ export class UserService {
   }
 
   findUserByEmail(email: string) {
-    if (email !== this.testUser.email) {
-      return null;
-    }
-    return this.testUser;
+    const user = this.testUser.find((user) => user.email === email);
+    if (!user) return null;
+    return user;
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
