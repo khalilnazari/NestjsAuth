@@ -40,7 +40,9 @@ export class AuthService {
         role: user.role,
       };
 
-      return { access_token: await this.jwtService.signAsync(payload) };
+      const acsessToken = await this.jwtService.signAsync(payload);
+
+      return { acsessToken };
     } catch (error) {
       console.log('signin error : ', error);
       return error.response;

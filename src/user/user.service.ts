@@ -25,7 +25,7 @@ export class UserService {
     const password = await bcrypt.hash('random123', this.saldRound);
 
     const newUser = {
-      email: 'find.one@gmail.com',
+      email: 'find.three@gmail.com',
       password,
       role: 'User',
     };
@@ -39,8 +39,8 @@ export class UserService {
         console.log('User exist', userExist);
         throw new ConflictException('User exist');
       }
-
-      const response = await this.usersRepository.save(newUser);
+      const user = this.usersRepository.create(newUser);
+      const response = await this.usersRepository.save(user);
       if (!response) {
         throw new NotFoundException();
       }
@@ -85,11 +85,13 @@ export class UserService {
   }
 
   async findOne(id: string): Promise<UpdateUserDto> {
+    console.log(id);
     try {
       const user = await this.usersRepository.findOneBy({ id });
+      console.log(user);
       if (!user) throw new NotFoundException();
       const { password, ...rest } = user;
-      return rest;
+      return user;
     } catch (error) {
       return error.response;
     }
@@ -98,14 +100,17 @@ export class UserService {
   async findUserByEmail(email: string): Promise<User> {
     try {
       const user = await this.usersRepository.findOneBy({ email });
-      if (!user) throw new NotFoundException();
+      if (!user) return null;
       return user;
     } catch (error) {
       return error.response;
     }
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
     if (updateUserDto.password) {
       const saltOrRounds = 10;
       updateUserDto.password = await bcrypt.hash('random123', saltOrRounds);
@@ -113,13 +118,13 @@ export class UserService {
 
     try {
       const user = await this.usersRepository.findOneBy({ id });
+
       if (!user) throw new NotFoundException();
 
-      const response = await this.usersRepository.save({
-        id,
-        ...updateUserDto,
-      });
+      Object.assign(user, updateUserDto);
 
+      const response = await this.usersRepository.save(user);
+      const { password, ...rest } = response;
       return response;
     } catch (error) {
       console.log(error);
@@ -129,9 +134,10 @@ export class UserService {
 
   async remove(id: string): Promise<UpdateUserDto> {
     try {
-      const user = await this.usersRepository.delete(id);
-      if (!user) throw new NotFoundException();
-      return { message: `User with ${id} is removed permanenlty` };
+      const isExistUser = await this.usersRepository.findOneBy({ id });
+      if (!isExistUser) throw new NotFoundException();
+      const user = await this.usersRepository.remove(isExistUser);
+      return { message: `${user.email} has been deleted successfully` };
     } catch (error) {
       console.log(error);
       return error.response;

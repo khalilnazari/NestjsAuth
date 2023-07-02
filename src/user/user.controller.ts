@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -31,6 +33,13 @@ export class UserController {
   @Get()
   findAll() {
     return this.userService.findAll();
+  }
+
+  @Get('/search')
+  async searchUser(@Query('email') email: string) {
+    const response = await this.userService.findUserByEmail(email);
+    if (!response) throw new NotFoundException();
+    return response;
   }
 
   @UseGuards(AuthGuard)
