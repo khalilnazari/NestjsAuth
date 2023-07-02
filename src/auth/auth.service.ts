@@ -7,6 +7,7 @@ import { SignInDto } from './dto/auth.dto';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -15,24 +16,35 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(signInDto: SignInDto) {
-    const user = this.userService.findUserByEmail(signInDto.email);
+  async signIn(authData: SignInDto) {
+    try {
+      const user = await this.userService.findUserByEmail(authData.email);
 
-    if (!user) {
-      throw new NotFoundException();
+      if (!user) {
+        throw new NotFoundException();
+      }
+
+      const passwordMatch = await bcrypt.compare(
+        authData.password,
+        user.password,
+      );
+
+      if (!passwordMatch) {
+        throw new UnauthorizedException();
+      }
+
+      const payload = {
+        id: user.id,
+        username: user.email,
+        secret: jwtConstants.secret,
+        role: user.role,
+      };
+
+      return { access_token: await this.jwtService.signAsync(payload) };
+    } catch (error) {
+      console.log('signin error : ', error);
+      return error.response;
     }
-
-    if (user.password !== signInDto.password) {
-      throw new UnauthorizedException();
-    }
-
-    const payload = {
-      id: user.userId,
-      username: user.email,
-      secret: jwtConstants.secret,
-    };
-
-    return { access_token: await this.jwtService.signAsync(payload) };
   }
 
   signOut() {
