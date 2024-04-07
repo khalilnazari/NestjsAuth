@@ -3,8 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -21,59 +20,28 @@ export class UserService {
     this.saldRound = 10;
   }
 
-  async createNewUser(): Promise<any> {
-    const password = await bcrypt.hash('random123', this.saldRound);
-
-    const newUser = {
-      email: 'find.three@gmail.com',
-      password,
-      role: 'User',
-    };
-
+  async create(newUser: CreateUserDto): Promise<User> {
     try {
       const userExist = await this.usersRepository.findOneBy({
         email: newUser.email,
       });
 
       if (userExist) {
-        console.log('User exist', userExist);
-        throw new ConflictException('User exist');
-      }
-      const user = this.usersRepository.create(newUser);
-      const response = await this.usersRepository.save(user);
-      if (!response) {
-        throw new NotFoundException();
-      }
-
-      return { message: `${newUser.email} is created` };
-    } catch (error) {
-      return error.response;
-    }
-  }
-
-  async create(newUser: CreateUserDto): Promise<UpdateUserDto | any> {
-    try {
-      const userExist = await this.usersRepository.findOneBy({
-        email: newUser.email,
-      });
-
-      if (userExist) {
-        console.log('User exist', userExist);
         throw new ConflictException('User exist');
       }
 
       newUser.password = await bcrypt.hash(newUser.password, this.saldRound);
       const response = await this.usersRepository.save(newUser);
+
       if (!response) throw new NotFoundException();
-      const { password, ...user } = response;
-      return user;
+      return response;
     } catch (error) {
       console.log(error);
-      return error.response;
+      return error;
     }
   }
 
-  async findAll(): Promise<User[] | any> {
+  async findAll(): Promise<User[]> {
     try {
       const response = await this.usersRepository.find();
       if (!response) throw new NotFoundException();
@@ -107,10 +75,7 @@ export class UserService {
     }
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UpdateUserDto> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     if (updateUserDto.password) {
       const saltOrRounds = 10;
       updateUserDto.password = await bcrypt.hash('random123', saltOrRounds);
@@ -124,7 +89,7 @@ export class UserService {
       Object.assign(user, updateUserDto);
 
       const response = await this.usersRepository.save(user);
-      const { password, ...rest } = response;
+
       return response;
     } catch (error) {
       console.log(error);
