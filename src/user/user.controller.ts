@@ -8,9 +8,11 @@ import {
   Delete,
   Query,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -22,13 +24,14 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   findAll() {
     return this.userService.findAll();
   }
 
   @Get('/search')
   async searchUser(@Query('email') email: string) {
-    const response = await this.userService.findUserByEmail(email);
+    const response = await this.userService.findOneByEmail(email);
     if (!response) throw new NotFoundException();
     return response;
   }

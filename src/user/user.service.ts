@@ -65,7 +65,7 @@ export class UserService {
     }
   }
 
-  async findUserByEmail(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<User> {
     try {
       const user = await this.usersRepository.findOneBy({ email });
       if (!user) return null;
