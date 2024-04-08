@@ -8,11 +8,11 @@ import {
   Delete,
   Query,
   NotFoundException,
-  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Roles } from 'src/auth/roles/roles.enum';
 
 @Controller('user')
 export class UserController {
@@ -23,10 +23,11 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  // only admin can acccess
   @Get()
-  @UseGuards(AuthGuard)
-  findAll() {
-    return this.userService.findAll();
+  @Auth(Roles.Admin)
+  async findAll() {
+    return await this.userService.findAll();
   }
 
   @Get('/search')
@@ -36,12 +37,16 @@ export class UserController {
     return response;
   }
 
+  // only user can access
   @Get(':id')
+  @Auth(Roles.User)
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);
   }
 
+  // anyone can access
   @Patch(':id')
+  @Auth()
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return await this.userService.update(id, updateUserDto);
   }
