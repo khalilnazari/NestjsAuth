@@ -7,10 +7,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { authConstants } from './auth.constants';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService, private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -26,7 +27,17 @@ export class AuthGuard implements CanActivate {
       });
 
       request['user'] = payload;
-      return true;
+
+      const requiredRoles = this.reflector.getAllAndOverride<string[]>(
+        'roles',
+        [context.getHandler(), context.getClass()],
+      );
+      console.log('requiredRoles: ', requiredRoles);
+      if (requiredRoles.length === 0) {
+        return true;
+      }
+      const user = request.user;
+      return requiredRoles.some((role) => user.role?.includes(role));
     } catch {
       throw new UnauthorizedException();
     }
